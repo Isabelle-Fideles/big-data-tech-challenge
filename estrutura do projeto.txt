@@ -1,0 +1,206 @@
+Vou ler o arquivo de fluxo de desenvolvimento para entender a estrutura do projeto e depois explicar detalhadamente cada diretório.
+
+Read file: fluxo de desenvolvimento.txt
+Agora vou ler o README.md para entender melhor o projeto:
+
+Read file: README.md
+Agora vou verificar se existe algum arquivo de arquitetura AWS:
+
+Read file: arquitetura_aws.md
+Com base na análise dos arquivos, vou criar uma estrutura de projeto detalhada explicando cada diretório conforme o fluxo de desenvolvimento. Aqui está a estrutura recomendada:
+
+## 📁 Estrutura Detalhada do Projeto B3 Data Pipeline
+
+### **Raiz do Projeto (`b3_data_pipeline/`)**
+```
+b3_data_pipeline/
+├── 📄 README.md                    # Documentação principal do projeto
+├── 📄 requirements.txt             # Dependências Python do projeto
+├── 📄 fluxo de desenvolvimento.txt # Guia sequencial de implementação
+├── �� arquitetura_aws.md          # Diagrama da arquitetura AWS
+├── 📁 venv/                       # Ambiente virtual Python (já existente)
+├── 📁 src/                        # Código fonte principal
+├── 📁 data/                       # Dados processados localmente
+├── 📁 config/                     # Configurações e variáveis de ambiente
+├── 📁 logs/                       # Logs de execução
+├── 📁 tests/                      # Testes unitários e de integração
+├── 📁 docs/                       # Documentação técnica
+└── 📁 scripts/                    # Scripts de automação e deploy
+```
+
+### **📁 `src/` - Código Fonte Principal**
+```
+src/
+├── 📁 collectors/                 # Coletores de dados da B3
+│   ├── __init__.py
+│   ├── b3_scraper.py             # Módulo principal de coleta da API B3
+│   └── api_client.py             # Cliente HTTP para APIs da B3
+├── 📁 models/                     # Modelos de dados Pydantic
+│   ├── __init__.py
+│   ├── ibov.py                   # Modelos para validação dos dados do Ibovespa
+│   └── schemas.py                # Schemas gerais de dados
+├── 📁 storage/                    # Camada de armazenamento
+│   ├── __init__.py
+│   ├── save_raw.py               # Função para salvar dados brutos em Parquet
+│   ├── local_storage.py          # Gerenciamento de armazenamento local
+│   └── s3_storage.py             # Integração com AWS S3
+├── 📁 processors/                 # Processadores e transformações
+│   ├── __init__.py
+│   ├── data_transformer.py       # Transformações de dados
+│   └── data_validator.py         # Validações adicionais
+├── 📁 utils/                      # Utilitários gerais
+│   ├── __init__.py
+│   ├── logger.py                 # Configuração de logs
+│   ├── config.py                 # Gerenciamento de configurações
+│   └── helpers.py                # Funções auxiliares
+├── 📁 aws/                       # Integrações AWS
+│   ├── __init__.py
+│   ├── lambda_handler.py         # Handler da função Lambda
+│   ├── glue_job.py              # Script do AWS Glue Job
+│   └── athena_queries.py        # Consultas SQL para Athena
+└── main.py                       # Script principal de execução
+```
+
+### **📁 `data/` - Dados Processados Localmente**
+```
+data/
+├── 📁 bronze/                     # Camada Bronze - Dados brutos
+│   └── YYYY-MM-DD.parquet        # Arquivos com header + results juntos
+├── 📁 raw/                        # Dados originais da API (JSON)
+│   └── YYYY-MM-DD.json           # Respostas completas da API B3
+├── 📁 refined/                    # Dados refinados (após processamento)
+│   ├── 📁 ativos/                # Dados dos ativos separados
+│   │   └── data=YYYY-MM-DD/
+│   │       └── acao=*/
+│   └── 📁 header/                # Dados do header separados
+│       └── data=YYYY-MM-DD/
+└── 📁 processed/                  # Dados finais processados
+    └── reports/                  # Relatórios gerados
+```
+
+### **�� `config/` - Configurações**
+```
+config/
+├── 📄 .env                       # Variáveis de ambiente (não versionado)
+├── 📄 config.yaml               # Configurações do projeto
+├── 📄 aws_config.json           # Configurações específicas AWS
+└── 📄 logging_config.yaml       # Configuração de logs
+```
+
+### **📁 `logs/` - Logs de Execução**
+```
+logs/
+├── 📄 app.log                   # Log principal da aplicação
+├── 📄 error.log                 # Log de erros
+├── 📄 aws.log                   # Log de operações AWS
+└── 📁 daily/                    # Logs organizados por data
+    └── YYYY-MM-DD.log
+```
+
+### **📁 `tests/` - Testes**
+```
+tests/
+├── 📁 unit/                      # Testes unitários
+│   ├── test_collectors.py       # Testes dos coletores
+│   ├── test_models.py           # Testes dos modelos
+│   ├── test_storage.py          # Testes de armazenamento
+│   └── test_processors.py       # Testes dos processadores
+├── 📁 integration/               # Testes de integração
+│   ├── test_api_integration.py  # Testes da API B3
+│   └── test_aws_integration.py  # Testes AWS
+├── 📁 fixtures/                  # Dados de teste
+│   ├── sample_data.json         # Dados de exemplo
+│   └── mock_responses.py        # Respostas mockadas
+└── conftest.py                  # Configuração do pytest
+```
+
+### **�� `docs/` - Documentação Técnica**
+```
+docs/
+├── 📄 development-guide.md      # Guia de desenvolvimento
+├── 📄 operations-manual.md      # Manual de operação
+├── 📄 api-documentation.md      # Documentação das APIs
+├── �� aws-setup-guide.md        # Guia de configuração AWS
+└── 📁 diagrams/                 # Diagramas e arquitetura
+    ├── pipeline-flow.png        # Fluxo do pipeline
+    └── aws-architecture.png     # Arquitetura AWS
+```
+
+### **📁 `scripts/` - Scripts de Automação**
+```
+scripts/
+├── 📄 setup_environment.sh      # Script de configuração do ambiente
+├── 📄 deploy_aws.sh             # Script de deploy AWS
+├── 📄 backup_data.sh            # Script de backup
+└── 📄 cleanup.sh                # Script de limpeza
+```
+
+## �� **Explicação Detalhada de Cada Diretório:**
+
+### **1. `src/collectors/`**
+- **Propósito**: Responsável pela coleta de dados da API da B3
+- **`b3_scraper.py`**: Módulo principal que faz requisições HTTP para a API da B3, obtendo dados do Ibovespa
+- **`api_client.py`**: Cliente HTTP reutilizável com configurações de timeout, retry e headers
+
+### **2. `src/models/`**
+- **Propósito**: Define a estrutura e validação dos dados usando Pydantic
+- **`ibov.py`**: Modelos específicos para os dados do Ibovespa (header e results)
+- **`schemas.py`**: Schemas gerais reutilizáveis em todo o projeto
+
+### **3. `src/storage/`**
+- **Propósito**: Gerencia o armazenamento de dados em diferentes formatos
+- **`save_raw.py`**: Função principal para salvar dados brutos em formato Parquet
+- **`local_storage.py`**: Operações de arquivo local
+- **`s3_storage.py`**: Upload e download de dados do AWS S3
+
+### **4. `src/processors/`**
+- **Propósito**: Transformações e processamento de dados
+- **`data_transformer.py`**: Separação de header e results, transformações de dados
+- **`data_validator.py`**: Validações adicionais além do Pydantic
+
+### **5. `src/utils/`**
+- **Propósito**: Utilitários e configurações compartilhadas
+- **`logger.py`**: Configuração centralizada de logs
+- **`config.py`**: Gerenciamento de configurações do projeto
+- **`helpers.py`**: Funções auxiliares reutilizáveis
+
+### **6. `src/aws/`**
+- **Propósito**: Integrações específicas com serviços AWS
+- **`lambda_handler.py`**: Função Lambda que aciona o Glue Job
+- **`glue_job.py`**: Script executado pelo AWS Glue para ETL
+- **`athena_queries.py`**: Consultas SQL pré-definidas para análise
+
+### **7. `data/`**
+- **Propósito**: Organização dos dados em camadas (Bronze, Raw, Refined)
+- **`bronze/`**: Dados brutos exatamente como recebidos da API
+- **`raw/`**: Dados originais em JSON
+- **`refined/`**: Dados processados e separados por tipo
+
+### **8. `config/`**
+- **Propósito**: Centralização de todas as configurações
+- **`.env`**: Variáveis sensíveis (credenciais)
+- **`config.yaml`**: Configurações gerais do projeto
+- **`aws_config.json`**: Configurações específicas AWS
+
+### **9. `logs/`**
+- **Propósito**: Rastreamento e monitoramento da aplicação
+- Logs separados por tipo e data para facilitar debugging
+
+### **10. `tests/`**
+- **Propósito**: Garantia de qualidade e confiabilidade
+- Testes unitários para cada módulo
+- Testes de integração para APIs e AWS
+- Fixtures para dados de teste consistentes
+
+### **11. `docs/`**
+- **Propósito**: Documentação técnica completa
+- Guias de desenvolvimento e operação
+- Documentação de APIs e arquitetura
+
+### **12. `scripts/`**
+- **Propósito**: Automação de tarefas operacionais
+- Scripts de setup, deploy e manutenção
+
+Esta estrutura segue as melhores práticas de engenharia de dados 
+e está alinhada com o fluxo de desenvolvimento descrito no arquivo,
+ permitindo uma implementação incremental e organizada do pipeline de dados da B3.

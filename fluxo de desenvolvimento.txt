@@ -1,0 +1,105 @@
+Sequência de Tarefas de Desenvolvimento do Projeto
+Esta seção detalha as etapas sequenciais para o desenvolvimento completo da arquitetura de ingestão, 
+processamento e análise de dados da B3 na AWS.
+
+Tarefa 1: Configuração do Ambiente de Desenvolvimento Local	
+Ação: Preparar a sua máquina para codificação Python e execução de scripts.
+Passos:
+        #Instalar Python 3.x (se ainda não tiver).
+        #Configurar um ambiente virtual (venv ou conda) para o projeto.
+        #Instalar as bibliotecas Python necessárias: requests, pandas, fastparquet, pydantic.
+        #Instalar e configurar o AWS CLI e/ou o boto3 para interagir com a AWS a partir do seu ambiente local.
+
+Tarefa 2: Desenvolvimento do Código de Extração e Salvamento Local
+Ação: Criar os scripts Python que coletam dados da B3 e os salvam em seu formato bruto e refinado, localmente.
+Passos: 
+        #Desenvolver o módulo b3_scraper.py para fazer as requisições à API da B3 e obter a resposta completa 
+        (incluindo "header" e "results" juntos).
+        #Definir os modelos Pydantic em ibov.py para validar a estrutura dos dados recebidos da API.
+        #Implementar a função em save_raw.py (ou em um módulo similar) para persistir a
+        resposta completa da API (JSON original convertido para Parquet, 
+        contendo header e results juntos) em um único arquivo Parquet localmente.
+        #Formato do arquivo: data/bronze/YYYY-MM-DD/dados_originais.parquet.
+Observação: O objetivo desta etapa é criar uma cópia fiel e validada da resposta da API na sua máquina local, simulando a camada Bronze antes do upload para o S3. A separação do "header" e "results" será feita posteriormente pelo AWS Glue.
+Criar o script principal main.py para orquestrar a execução da coleta, validação e chamadas à função de salvamento do arquivo Parquet bruto local.
+
+Tarefa 3: Teste e Geração Inicial de Dados Locais
+Ação: Validar se os scripts locais funcionam conforme o esperado e gerar os primeiros arquivos de teste.
+Passos:
+        #Executar o script main.py algumas vezes, gerando dados para diferentes dias, para popular as pastas
+         data/raw/ e data/bronze/ localmente.
+        #Verificar a existência e o conteúdo dos arquivos .json e .parquet gerados 
+        localmente para garantir que os formatos e dados estejam corretos.
+
+Tarefa 4: Configuração Inicial na AWS - S3 (Camada Bronze)
+Ação: Criar o ambiente de armazenamento para os dados brutos na nuvem.
+Passos:
+Acessar o Console de Gerenciamento da AWS.
+        #Navegar até o serviço S3.
+        #Criar um novo bucket S3 (ex: b3-techchallenge-fase2), garantindo que o nome seja globalmente único.
+        #Criar a pasta (prefixo) bronze/ dentro deste bucket para armazenar os dados da Camada Bronze.
+Tarefa 5: Ingestão Manual de Dados para o S3 (Camada Bronze)
+Ação: Enviar os dados brutos gerados localmente para o S3.
+Passos:
+        #Utilizar um script Python com boto3 ou comandos do AWS CLI para fazer o upload dos arquivos 
+        .parquet da sua pasta data/bronze/ (aqueles que contêm header e results juntos) para o bucket S3, seguindo a estrutura de partição por data: s3://b3-techchallenge-fase2-andrea/raw/YYYY-MM-DD/.
+        #Verificar no console S3 se os arquivos foram carregados corretamente.
+
+Tarefa 6: Configuração do AWS Glue (Funções IAM)
+Ação: Conceder ao AWS Glue as permissões necessárias para acessar o S3 e o Data Catalog.
+Passos:
+        #Navegar até o serviço IAM no Console da AWS.
+        #Criar uma nova IAM Role (Função IAM) dedicada ao AWS Glue.
+        #Anexar as políticas gerenciadas necessárias, como AWSGlueServiceRole e 
+        políticas de acesso ao S3 (AmazonS3FullAccess ou políticas mais granulares para 
+        leitura do bucket raw e escrita no refined).
+
+Tarefa 7: Desenvolvimento e Execução do AWS Glue Job (Transformação ETL)
+Ação: Criar o job que lê os dados brutos, os transforma e os salva na camada refinada.
+Passos:
+        #Acessar o AWS Glue Studio no Console da AWS.
+        #Criar um novo Job ETL (tipo Spark ou Python Shell).
+        #Configurar a fonte de dados para ler do S3 Bronze (s3://b3-techchallenge-fase2/bronze/).
+        #Implementar a lógica de transformação no Job:
+        #Separar os dados do "header" dos "results" (ativos) em dois conjuntos de dados distintos.
+	    #Aplicar as transformações necessárias para cada conjunto (ex: renomear colunas, ajustar tipos de dados, cálculos).
+	    #Definir os destinos para salvar os dados transformados em S3 (na camada Refined), utilizando partições adequadas:
+	    #Dados dos Ativos: s3://b3-techchallenge-fase2/refined/ativos/data=YYYY-MM-DD/acao=*/
+	    #Dados do Header: s3://b3-techchallenge-fase2/refined/header/data=YYYY-MM-DD/
+	    #Executar o Glue Job uma vez manualmente para garantir que ele processe os dados da camada Bronze, salve na camada Refined e, mais importante, crie automaticamente as tabelas lógicas correspondentes no Glue Data Catalog.
+
+Tarefa 8: Verificação do Catálogo de Dados e Teste de Consultas (Athena)
+Ação: Confirmar a criação das tabelas lógicas e testar a acessibilidade dos dados para análise.
+Passos:
+Acessar o AWS Glue Data Catalog e verificar se as tabelas ibov_ativos e ibov_header (ou os nomes que você definiu) foram criadas com o schema e particionamento corretos, apontando para os dados na camada Refined do S3.
+        #Acessar o AWS Athena.
+    	#Selecionar o banco de dados e as tabelas recém-criadas.
+    	#Executar consultas SQL de teste nas tabelas ibov_ativos e ibov_header para confirmar que os dados transformados estão acessíveis e corretos.
+
+Tarefa 9: Configuração e Desenvolvimento da Automação (Lambda e S3 Events)
+Ação: Implementar a lógica para acionar automaticamente o Glue Job quando novos dados brutos chegarem ao S3.
+Passos:
+    	#Criar uma nova IAM Role para o AWS Lambda.
+    	#Anexar as políticas necessárias a esta Role para permitir que o Lambda seja acionado por eventos S3 e chame o AWS Glue (especificamente a permissão glue:StartJobRun).
+    	#Criar uma nova função AWS Lambda (em Python) com o código para invocar o Glue Job usando boto3.client('glue').start_job_run(...).
+    	#Configurar um "Trigger" (Gatilho) para o bucket S3 b3-techchallenge-fase2-andrea. Este gatilho deve ser configurado para acionar a função Lambda sempre que um novo objeto .parquet for criado na pasta raw/ (camada Bronze).
+
+Tarefa 10: Teste da Automação de Ponta a Ponta
+Ação: Validar se todo o pipeline funciona automaticamente do início ao fim.
+Passos:
+    	#Gerar um novo arquivo .parquet de dados brutos localmente (com o seu main.py da Tarefa 2).
+    	#Fazer o upload deste novo arquivo para a pasta s3://b3-techchallenge-fase2/raw/ no S3 (simulando uma nova ingestão).
+        #Monitorar os logs do AWS CloudWatch para a função Lambda para verificar se ela foi acionada.
+    	#Verificar no console do AWS Glue se o Job foi iniciado e concluído com sucesso após o upload.
+    	#Acessar o AWS Athena e executar consultas para confirmar se os dados do novo dia foram adicionados corretamente às tabelas ibov_ativos e ibov_header.
+
+Tarefa 11 (Opcional): Configuração de Business Intelligence (AWS QuickSight)
+Ação: Criar visualizações e dashboards para os dados transformados.
+Passos:
+    	#Acessar o AWS QuickSight (se for o serviço escolhido para BI).
+    	#Criar um novo conjunto de dados (dataset) conectando-o às tabelas ibov_ativos e ibov_header no Athena.
+    	#Construir dashboards e visualizações para explorar os dados, respondendo a possíveis perguntas de negócio.
+
+
+Conclusão: 
+Os dados ingeridos para testes deverão ser apagados e carregados novamente no S3. Assim a automação Lambda irá impactar sobre eles!!!

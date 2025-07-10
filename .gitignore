@@ -1,0 +1,37 @@
+# Ambiente virtual
+venv/
+
+# Arquivos de configuração sensíveis
+.env
+config/*.env
+
+# Dados gerados e arquivos temporários
+data/
+*.parquet
+*.json
+*.csv
+*.log
+*.tmp
+
+# Arquivos de cache e bytecode Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Arquivos de testes e relatórios
+test_api_dates.py
+.coverage
+htmlcov/
+
+# Configurações do VSCode e IDEs
+.vscode/
+.idea/
+*.swp
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# AWS e credenciais
+.aws/ 

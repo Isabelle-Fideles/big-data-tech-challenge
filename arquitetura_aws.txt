@@ -1,0 +1,59 @@
+graph TD
+    subgraph Coleta Local e Bronze
+        A[Aplicação Python Local<br/>(Coleta e Extração B3)] --> B(Salva Localmente:<br/>`data/bronze/YYYY-MM-DD.parquet`)
+        B --> C{Upload para AWS S3<br/>(Camada Bronze: dados completos)}
+    end
+
+    subgraph AWS Data Lake (Bronze)
+        D[S3 Bucket: <br/>`b3-techchallenge-fase2/raw`<br/>(Dados Brutos - Header + Results JUNTOS)]
+        C --> D
+    end
+
+    subgraph Automação de Pipeline
+        E(S3 Event Notification<br/>(Gatilho por Upload de Objeto))
+        D -- Novo Objeto --> E
+        F[AWS Lambda<br/>(Função de Código, Aciona ETL)]
+        E --> F
+        G(AWS Glue Job <br/>`start_job_run`<br/>(Orquestração do ETL))
+        F --> G
+    end
+
+    subgraph Processamento ETL (Refined)
+        H[AWS Glue Studio Job<br/>(Serviço ETL Serverless)]
+        G --> H
+        I1(S3 Bucket: <br/>`b3-techchallenge-fase2/refined/ativos`<br/>(Dados Refinados - Ativos))
+        H -- Separação e Transformação --> I1
+        I2(S3 Bucket: <br/>`b3-techchallenge-fase2/refined/header`<br/>(Dados Refinados - Header))
+        H -- Separação e Transformação --> I2
+    end
+
+    subgraph Catálogo de Dados
+        J[AWS Glue Data Catalog<br/>(Repositório de Metadados)]
+        H -- Cataloga --> J
+    end
+
+    subgraph Análise e BI
+        K[AWS Athena<br/>(Motor de Consulta SQL Serverless)]
+        J -- Acessa Metadados --> K
+        I1 -- Dados --> K
+        I2 -- Dados --> K
+        L(Resultados e Análises)
+        K --> L
+        M[AWS QuickSight<br/>(Serviço de BI para Visualização)]
+        K -- Visualização Opcional --> M
+    end
+
+    style A fill:#D0E7F5,stroke:#333,stroke-width:2px,color:#000
+    style B fill:#D0E7F5,stroke:#333,stroke-width:2px,color:#000
+    style C fill:#D0E7F5,stroke:#333,stroke-width:2px,color:#000
+    style D fill:#FFF2CC,stroke:#FF8C00,stroke-width:2px,color:#000
+    style E fill:#D4EDDA,stroke:#28A745,stroke-width:2px,color:#000
+    style F fill:#ADD8E6,stroke:#1E90FF,stroke-width:2px,color:#000
+    style G fill:#ADD8E6,stroke:#1E90FF,stroke-width:2px,color:#000
+    style H fill:#E6F5D0,stroke:#6C757D,stroke-width:2px,color:#000
+    style I1 fill:#F8F9FA,stroke:#6C757D,stroke-width:2px,color:#000
+    style I2 fill:#F8F9FA,stroke:#6C757D,stroke-width:2px,color:#000
+    style J fill:#C9DEF3,stroke:#17A2B8,stroke-width:2px,color:#000
+    style K fill:#F5D0E7,stroke:#6F42C1,stroke-width:2px,color:#000
+    style L fill:#F5D0E7,stroke:#6F42C1,stroke-width:2px,color:#000
+    style M fill:#F5D0E7,stroke:#6F42C1,stroke-width:2px,color:#000
