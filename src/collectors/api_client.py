@@ -6,7 +6,7 @@ PAYLOAD_DICT = {
     "pageNumber": 1,
     "pageSize": 500,
     "index": "IBOV",
-    "segment": "1"
+    "segment": "2"
 }
 
 # Headers da requisição GET
